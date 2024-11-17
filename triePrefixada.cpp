@@ -6,6 +6,8 @@
 #include <locale>
 #include <codecvt>
 #include <iomanip>
+#include <cmath>
+
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -86,7 +88,7 @@ vector<int> lzwCompress(const string& data, Trie& trie) {
     // Inicializa a Trie com caracteres ASCII
     for (int i = 0; i < 256; ++i) {
         trie.insert(string(1, i), i);
-        trie.map.insert({ i , string(1, i) });  // Opcional, dependendo da descompressao
+        trie.map.insert({ i , string(1, i) }); 
     }
 
     vector<int> compressed;
@@ -251,6 +253,7 @@ void readCompressedFromFile(const string& filePath, vector<int>& compressed, int
 }
 
 void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoComprimido, const string& caminhoSaida, bool tamanhoFixo, int maxBits) {
+
     // Lê o arquivo de entrada
     ifstream inFile(caminhoEntrada, ios::binary);
     if (!inFile) {
@@ -266,14 +269,24 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
     Trie trie;
     vector<int> compressed = lzwCompress(input, trie);
     writeCompressedToFile(compressed, nomeArquivoComprimido, maxBits);
+    string decompressed = lzwDecompress(compressed, trie);
+    writeDecompressedToFile(caminhoSaida, decompressed);
+
 
     // Calcula os tamanhos dos arquivos para relatório
     ifstream originalFile(caminhoEntrada, ios::binary | ios::ate);
     ifstream compressedFile(nomeArquivoComprimido, ios::binary | ios::ate);
+    ifstream decompressedFile(caminhoSaida, ios::binary | ios::ate);
 
-    if (originalFile && compressedFile) {
-        size_t tamanhoOriginal = originalFile.tellg();
-        size_t tamanhoComprimido = compressedFile.tellg();
+
+    if (originalFile && compressedFile && decompressedFile) {
+        size_t tamanhoOriginal;
+        size_t tamanhoComprimido;
+        size_t tamanhoDescomprimido;
+
+        tamanhoOriginal = originalFile.tellg();
+        tamanhoComprimido = compressedFile.tellg();
+        tamanhoDescomprimido = decompressedFile.tellg();
 
         double taxaCompressao = 100.0 * (1.0 - (double(tamanhoComprimido) / tamanhoOriginal));
 
@@ -281,6 +294,7 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
         cout << fixed << setprecision(2);
         cout << "Tamanho original: " << tamanhoOriginal << " bytes\n";
         cout << "Tamanho comprimido: " << tamanhoComprimido << " bytes\n";
+        cout << "Tamanho descomprimido: " << tamanhoDescomprimido << " bytes\n";
         cout << "Taxa de compressao: " << taxaCompressao << "%\n";
     }
     else {
@@ -289,14 +303,10 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
 
     originalFile.close();
     compressedFile.close();
-
-    // Descompressao
-    //vector<int> compressedRead;
-    //readCompressedFromFile(nomeArquivoComprimido, compressedRead, maxBits);
-    string decompressed = lzwDecompress(compressed, trie);
-    writeDecompressedToFile(caminhoSaida, decompressed);
-
-    cout << "Descompressao concluida. Arquivo salvo em: " << caminhoSaida << endl;
+    decompressedFile.close();
+    
+    
+   /* cout << "Descompressao concluida. Arquivo salvo em: " << caminhoSaida << endl;*/
 }
 
 // Funçao para obter a extensao do arquivo
@@ -453,6 +463,5 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    int teste = 0;
     return 0;
 }
