@@ -17,15 +17,15 @@
 
 using namespace std;
 
-// Funçao que calcula o número de bits necessários para representar um valor
+// Funï¿½ao que calcula o nï¿½mero de bits necessï¿½rios para representar um valor
 int bitsNecessarios(int valor) {
     return valor > 0 ? int(ceil(log2(valor + 1))) : 1;
 }
 
-// Estrutura de nó da Trie
+// Estrutura de nï¿½ da Trie
 struct TrieNode {
     unordered_map<char, TrieNode*> children;
-    int index = -1;  // indice da sequência, -1 se nao for um nó terminal
+    int index = -1;  // indice da sequï¿½ncia, -1 se nao for um nï¿½ terminal
 };
 
 // Classe da Trie para compressao e descompressao
@@ -51,7 +51,7 @@ public:
             node = node->children[ch];
         }
         node->index = index;
-        map[index] = prefix;  // Mapeia o indice para a sequência
+        map[index] = prefix;  // Mapeia o indice para a sequï¿½ncia
     }
 
     int search(const string& prefix) {
@@ -81,7 +81,7 @@ private:
     }
 };
 
-// Funçao de compressao LZW usando Trie
+// Funï¿½ao de compressao LZW usando Trie
 vector<int> lzwCompress(const string& data, Trie& trie) {
     // Inicializa a Trie com caracteres ASCII
     for (int i = 0; i < 256; ++i) {
@@ -107,7 +107,7 @@ vector<int> lzwCompress(const string& data, Trie& trie) {
                 //cout << currentIndex << endl;
             }
             else {
-                throw runtime_error("Erro: Prefixo nao encontrado no dicionário durante a compressao.");
+                throw runtime_error("Erro: Prefixo nao encontrado no dicionï¿½rio durante a compressao.");
             }
 
             int nextIndex = trie.getNextIndex();
@@ -122,7 +122,7 @@ vector<int> lzwCompress(const string& data, Trie& trie) {
             compressed.push_back(lastIndex);
         }
         else {
-            throw runtime_error("Erro: Prefixo final nao encontrado no dicionário.");
+            throw runtime_error("Erro: Prefixo final nao encontrado no dicionï¿½rio.");
         }
     }
 
@@ -135,7 +135,7 @@ string lzwDecompress(const vector<int>& compressed, Trie& trie) {
     string result;
     int nextIndex = 256;
 
-    // O primeiro código sempre estará no dicionário
+    // O primeiro cï¿½digo sempre estarï¿½ no dicionï¿½rio
     result += trie.map[compressed[0]];
     string currentString = trie.map[compressed[0]];
 
@@ -148,16 +148,16 @@ string lzwDecompress(const vector<int>& compressed, Trie& trie) {
             entry = it->second;
         }
         else if (code == nextIndex) {
-            // Caso em que o código é o próximo a ser gerado
+            // Caso em que o cï¿½digo ï¿½ o prï¿½ximo a ser gerado
             entry = currentString + currentString[0];
         }
         else {
-            throw runtime_error("Código inválido durante a descompressao.");
+            throw runtime_error("Cï¿½digo invï¿½lido durante a descompressao.");
         }
 
         result += entry;
 
-        // Adiciona nova sequência ao dicionário
+        // Adiciona nova sequï¿½ncia ao dicionï¿½rio
         trie.insert(currentString + entry[0], nextIndex++);
         trie.map[nextIndex - 1] = currentString + entry[0];
 
@@ -167,7 +167,7 @@ string lzwDecompress(const vector<int>& compressed, Trie& trie) {
     return result;
 }
 
-// Funçao para salvar dados comprimidos em arquivo
+// Funï¿½ao para salvar dados comprimidos em arquivo
 void writeCompressedToFile(const vector<int>& compressed, const string& filePath, int maxBits) {
     ofstream outFile(filePath, ios::binary);
     if (!outFile) {
@@ -202,7 +202,7 @@ void writeCompressedToFile(const vector<int>& compressed, const string& filePath
     outFile.close();
 }
 
-// Funçao para salvar dados descomprimidos em arquivo
+// Funï¿½ao para salvar dados descomprimidos em arquivo
 void writeDecompressedToFile(const string& filePath, const string& content) {
     ofstream outFile(filePath, ios::binary);
     if (!outFile) {
@@ -216,7 +216,7 @@ void writeDecompressedToFile(const string& filePath, const string& content) {
     cout << "Arquivo descomprimido salvo em: " << filePath << endl;
 }
 
-// Funçao para ler dados comprimidos do arquivo
+// Funï¿½ao para ler dados comprimidos do arquivo
 void readCompressedFromFile(const string& filePath, vector<int>& compressed, int maxBits) {
     ifstream inFile(filePath, ios::binary);
     if (!inFile) {
@@ -226,7 +226,7 @@ void readCompressedFromFile(const string& filePath, vector<int>& compressed, int
 
     int buffer = 0;
     int bufferBits = 0;
-    int currentBits = 9;  // Inicia com 9 bits por código
+    int currentBits = 9;  // Inicia com 9 bits por cï¿½digo
 
     while (inFile.peek() != EOF) {
         char byte;
@@ -240,7 +240,7 @@ void readCompressedFromFile(const string& filePath, vector<int>& compressed, int
             int code = (buffer >> bufferBits) & ((1 << currentBits) - 1);
             compressed.push_back(code);
 
-            // Ajusta o número de bits conforme necessário
+            // Ajusta o nï¿½mero de bits conforme necessï¿½rio
             if (compressed.size() == (1 << currentBits) - 1 && currentBits < maxBits) {
                 currentBits++;
             }
@@ -251,14 +251,14 @@ void readCompressedFromFile(const string& filePath, vector<int>& compressed, int
 }
 
 void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoComprimido, const string& caminhoSaida, bool tamanhoFixo, int maxBits) {
-    // Lê o arquivo de entrada
+    // Lï¿½ o arquivo de entrada
     ifstream inFile(caminhoEntrada, ios::binary);
     if (!inFile) {
         cerr << "Erro ao abrir o arquivo: " << caminhoEntrada << endl;
         return;
     }
 
-    // Lê o conteúdo do arquivo
+    // Lï¿½ o conteï¿½do do arquivo
     string input((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
     inFile.close();
 
@@ -267,7 +267,7 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
     vector<int> compressed = lzwCompress(input, trie);
     writeCompressedToFile(compressed, nomeArquivoComprimido, maxBits);
 
-    // Calcula os tamanhos dos arquivos para relatório
+    // Calcula os tamanhos dos arquivos para relatï¿½rio
     ifstream originalFile(caminhoEntrada, ios::binary | ios::ate);
     ifstream compressedFile(nomeArquivoComprimido, ios::binary | ios::ate);
 
@@ -299,7 +299,7 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
     cout << "Descompressao concluida. Arquivo salvo em: " << caminhoSaida << endl;
 }
 
-// Funçao para obter a extensao do arquivo
+// Funï¿½ao para obter a extensao do arquivo
 string obterExtensao(const string& nomeArquivo) {
     size_t pos = nomeArquivo.find_last_of('.');
     if (pos != string::npos) {
@@ -308,7 +308,7 @@ string obterExtensao(const string& nomeArquivo) {
     return "";
 }
 
-// Funçao para obter o nome base do arquivo (sem extensao)
+// Funï¿½ao para obter o nome base do arquivo (sem extensao)
 string obterNomeBase(const string& nomeArquivo) {
     size_t pos = nomeArquivo.find_last_of("/\\");
     string nome = (pos != string::npos) ? nomeArquivo.substr(pos + 1) : nomeArquivo;
@@ -324,7 +324,7 @@ string wstringParaString(const wstring& wstr) {
     wstring_convert<codecvt_utf8<wchar_t>> converter;
     return converter.to_bytes(wstr);
 }
-// Funçao para listar arquivos no diretório
+// Funï¿½ao para listar arquivos no diretï¿½rio
 #if defined(_WIN32)
 vector<string> listarArquivosNoDiretorio(const string& caminho) {
     vector<string> arquivos;
@@ -344,7 +344,7 @@ vector<string> listarArquivosNoDiretorio(const string& caminho) {
         FindClose(hFind);
     }
     else {
-        cerr << "Erro ao abrir o diretório: " << caminho << endl;
+        cerr << "Erro ao abrir o diretï¿½rio: " << caminho << endl;
     }
 
     return arquivos;
@@ -364,7 +364,7 @@ vector<string> listarArquivosNoDiretorio(const string& caminho) {
         closedir(dir);
     }
     else {
-        cerr << "Erro ao abrir o diretório: " << caminho << endl;
+        cerr << "Erro ao abrir o diretï¿½rio: " << caminho << endl;
     }
     return arquivos;
 }
@@ -404,12 +404,12 @@ int main(int argc, char* argv[]) {
     }
 
     if (modoTeste) {
-        // Diretórios para o modo de teste
+        // Diretï¿½rios para o modo de teste
         string diretorioTests = "tests";
         string diretorioCompressed = "testsCompressed";
         string diretorioDescompressed = "testsDescompressed";
 
-        // Cria os diretórios de saida se nao existirem
+        // Cria os diretï¿½rios de saida se nao existirem
 #if defined(_WIN32)
         wstring wDiretorioCompressed = wstring(diretorioCompressed.begin(), diretorioCompressed.end());
         CreateDirectory(wDiretorioCompressed.c_str(), NULL);
@@ -421,7 +421,7 @@ int main(int argc, char* argv[]) {
         mkdir(diretorioDescompressed.c_str(), 0777);
 #endif
 
-        // Lista os arquivos no diretório 'tests'
+        // Lista os arquivos no diretï¿½rio 'tests'
         vector<string> arquivosTeste = listarArquivosNoDiretorio(diretorioTests);
 
         // Processa cada arquivo de teste
