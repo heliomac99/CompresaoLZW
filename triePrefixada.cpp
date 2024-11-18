@@ -10,6 +10,7 @@
 #include <chrono>
 #include <filesystem>
 #include <vector>
+#include "include/json.hpp"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -19,15 +20,15 @@
 #include <sys/types.h>
 #endif
 
-#include "include/json.hpp"
+
 
 using namespace std;
 using json = nlohmann::json;
 
-// Função que calcula o n�mero de bits necess�rios para representar um valor
-int bitsNecessarios(int valor) {
-    return valor > 0 ? int(ceil(log2(valor + 1))) : 1;
-}
+enum Operacao {
+    Compressao = 1,
+    Descompressao = 2
+};
 
 // Estrutura de no da Trie
 struct TrieNode {
@@ -88,12 +89,17 @@ private:
     }
 };
 
+// Função que calcula o n�mero de bits necess�rios para representar um valor
+int bitsNecessarios(int valor) {
+    return valor > 0 ? int(ceil(log2(valor + 1))) : 1;
+}
+
 // Função de compressao LZW usando Trie
 vector<int> lzwCompress(const string& data, Trie& trie) {
     // Inicializa a Trie com caracteres ASCII
     for (int i = 0; i < 256; ++i) {
         trie.insert(string(1, i), i);
-        trie.map.insert({ i , string(1, i) }); 
+        trie.map.insert({ i , string(1, i) });
     }
 
     vector<int> compressed;
@@ -256,11 +262,11 @@ void readCompressedFromFile(const string& filePath, vector<int>& compressed, int
 }
 
 // Função para adicionar ao vetor de relatiorios, o relatorio do processo atual
-void writeReport(vector<json>& relatorios, string tipo, int maxBits, double taxa, long int tamanhoDicionario, long int tempo){
+void writeReport(vector<json>& relatorios, Operacao operacao, int maxBits, long int tamanhoDicionario, long int tempo, double taxa = -1) {
     json j;
-    j["tipo"] = tipo;
+    j["tipo"] = operacao == Compressao ? "Compressão" : "Descompressão";
     j["maxBits"] = maxBits;
-    j["taxa"] = taxa;
+    j["taxa"] = operacao == Compressao ? taxa : 0;
     j["tempo"] = tempo;
     j["tamanhoDicionario"] = tamanhoDicionario;
 
@@ -268,17 +274,25 @@ void writeReport(vector<json>& relatorios, string tipo, int maxBits, double taxa
 }
 
 //Função que imprime informações do processsamento do arquivo
-void printInfo(const string& mensagem, const string& nomeArquivo, size_t tamanhoOriginal, size_t tamanhoComprimido, size_t tamanhoDescomprimido, float taxa, int tamanhoDicionario, float tempo) { 
-    cout << mensagem << " Arquivo salvo em: " << nomeArquivo << endl; 
-    cout << fixed << setprecision(2); 
+void printInfo(Operacao operacao, const string& nomeArquivo, size_t tamanhoOriginal, size_t tamanhoComprimido, size_t tamanhoDescomprimido, float taxa, int tamanhoDicionario, float tempo, int maxBits) {
+    if (operacao == Compressao)
+        cout << "Compressao realizada com sucesso. Arquivo salvo em: " << nomeArquivo << endl;
+    else
+        cout << "Descompressao realizada com sucesso. Arquivo salvo em: " << nomeArquivo << endl;
+
     cout << "Tamanho original:\t" << tamanhoOriginal << "\tbytes\n";
-    if(mensagem == "Compressao concluida.") 
+    if (operacao == Compressao)
         cout << "Tamanho comprimido:\t" << tamanhoComprimido << "\tbytes\n";
-    else 
+    else
         cout << "Tamanho descomprimido:\t" << tamanhoDescomprimido << "\tbytes\n";
-    cout << "Taxa de compressao:\t" << taxa << "\t%\n"; 
-    cout << "Tamanho Dicionário:\t" << tamanhoDicionario << "\telementos\n"; 
-    cout << "Tempo de compressao:\t" << tempo << "\tms\n\n";
+
+    if (operacao == Compressao) {
+        cout << "Taxa:\t" << taxa << "\t%\n";
+        cout << "Tamanho:\t" << tamanhoDicionario << "\telementos\n";
+    }
+        
+    cout << "Tempo:\t" << tempo << "\tms\n\n";
+    cout << "Max bits:\t" << maxBits << "\t\n\n";
 }
 
 void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoComprimido, const string& caminhoSaida, int maxBits, vector<json>& relatorios) {
@@ -312,7 +326,7 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
 
     auto enddesc = std::chrono::high_resolution_clock::now();
     auto durationdesc = std::chrono::duration_cast<std::chrono::milliseconds>(enddesc - startdesc);
-    long int decTime= durationdesc.count();
+    long int decTime = durationdesc.count();
 
     // Calcula os tamanhos dos arquivos para relatorio
     ifstream originalFile(caminhoEntrada, ios::binary | ios::ate);
@@ -329,15 +343,14 @@ void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoCom
         tamanhoDescomprimido = decompressedFile.tellg();
 
         double taxaCompressao = 100.0 * (1.0 - (double(tamanhoComprimido) / tamanhoOriginal));
-        double taxaDescompressao = 100.0 * (double(tamanhoDescomprimido) / tamanhoComprimido) - 100;
-        long int tamanhoDicionario= trie.getNextIndex();
+        long int tamanhoDicionario = trie.getNextIndex();
 
         //Imprime dados de desempenho do processamento do arquivo
-        printInfo("Compressao concluida.", nomeArquivoComprimido, tamanhoOriginal, tamanhoComprimido, tamanhoDescomprimido, taxaCompressao, tamanhoDicionario, compTime);
-        writeReport(relatorios, "Compressão", maxBits, taxaCompressao, tamanhoDicionario, compTime);
+        printInfo(Operacao::Compressao, nomeArquivoComprimido, tamanhoOriginal, tamanhoComprimido, tamanhoDescomprimido, taxaCompressao, tamanhoDicionario, compTime, maxBits);
+        writeReport(relatorios, Operacao::Compressao, maxBits, tamanhoDicionario, compTime, taxaCompressao);
 
-        printInfo("Descompressao concluida.", caminhoSaida, tamanhoOriginal, tamanhoComprimido, tamanhoDescomprimido, taxaDescompressao, tamanhoDicionario, decTime);
-        writeReport(relatorios, "Descompressão", maxBits, taxaDescompressao, tamanhoDicionario, decTime);
+        printInfo(Operacao::Descompressao, caminhoSaida, tamanhoOriginal, tamanhoComprimido, tamanhoDescomprimido, 0, tamanhoDicionario, decTime, maxBits);
+        writeReport(relatorios, Operacao::Descompressao, maxBits, tamanhoDicionario, decTime);
     }
     else {
         cerr << "Erro ao calcular os tamanhos dos arquivos." << endl;
@@ -419,29 +432,33 @@ vector<string> listarArquivosNoDiretorio(const string& caminho) {
 }
 #endif
 
-void executarProcessamento(const string& caminhoEntrada, const string& diretorioCompressed, const string& diretorioDescompressed, int maxBits,  vector<json>& relatorios) { 
-    string nomeBase = obterNomeBase(caminhoEntrada); 
-    string extensao = obterExtensao(caminhoEntrada); 
-    string nomeArquivoComprimido = diretorioCompressed + "/" + nomeBase + ".lzw"; 
-    string caminhoSaida = diretorioDescompressed + "/" + nomeBase + extensao; 
+void executarProcessamento(const string& caminhoEntrada, const string& diretorioCompressed, const string& diretorioDescompressed, int maxBits, vector<json>& relatorios) {
+    string nomeBase = obterNomeBase(caminhoEntrada);
+    string extensao = obterExtensao(caminhoEntrada);
+    string nomeArquivoComprimido = diretorioCompressed + "/" + nomeBase + ".lzw";
+    string caminhoSaida = diretorioDescompressed + "/" + nomeBase + extensao;
     processarArquivo(caminhoEntrada, nomeArquivoComprimido, caminhoSaida, maxBits, relatorios);
 }
 
-// Função para escrever no formato correto o relatorio no formato json
-void formatJson(ofstream& relatorio, vector<json>& relatorios){
+void formatJson(ofstream& relatorio, const vector<json>& relatorios) {
+    if (!relatorio.is_open()) {
+        throw runtime_error("Erro: Arquivo não está aberto para escrita.");
+    }
+
     relatorio << "[";
 
-    long unsigned int tamanho = relatorios.size();
-    long unsigned int i;
-    for ( i = 0; i < tamanho - 1; i++){
-        relatorio << relatorios[i].dump(4);
-        relatorio << "," << endl;
+    for (size_t i = 0; i < relatorios.size(); ++i) {
+        relatorio << relatorios[i];
+
+        // Adiciona vírgula entre os elementos, mas não no último
+        if (i < relatorios.size() - 1) {
+            relatorio << "," << endl;
+        }
     }
-    relatorio << relatorios[i].dump(4);
-    relatorio << "]";
 
-    relatorio.close();
+    relatorio << "]" << endl;
 
+    // Não é necessário chamar close aqui, o chamador pode fazer isso
 }
 
 int main(int argc, char* argv[]) {
@@ -454,7 +471,6 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "-t") {
-            cout << "testre";
             modoTeste = true;
         }
         else if (arg == "-9") {
@@ -477,15 +493,27 @@ int main(int argc, char* argv[]) {
             arquivosEntrada.push_back(arg);
         }
     }
-    
-    // Cria diretorio para geração do relatorio caso não exista
-    if (!filesystem::exists("relatorio/"))
-        if (!filesystem::create_directory("relatorio/"))
-            throw runtime_error("Erro ao criar diretório para relatório");
+
+string directory = "relatorio";
+#if defined(_WIN32)
+    // Convert string to wide string for Windows API
+    wstring wDirectory(directory.begin(), directory.end());
+    if (!CreateDirectory(wDirectory.c_str(), NULL)) {
+        if (GetLastError() != ERROR_ALREADY_EXISTS) {
+            throw std::runtime_error("Erro ao criar diretório: " + directory);
+        }
+    }
+#else
+    // Linux, macOS, and other Unix-like systems
+    if (mkdir(directory.c_str(), 0777) != 0 && errno != EEXIST) {
+        throw std::runtime_error("Erro ao criar diretório: " + directory);
+    }
+#endif
+
 
     // Cria Arquivo json para escrita do relatorio
     ofstream relatorio("relatorio/dados.json");
-    if(!relatorio.is_open())
+    if (!relatorio.is_open())
         throw runtime_error("Erro ao criar relatório");
 
     vector<json> relatorios;
@@ -512,15 +540,16 @@ int main(int argc, char* argv[]) {
         vector<string> arquivosTeste = listarArquivosNoDiretorio(diretorioTests);
 
         // Processa cada arquivo de teste
-        if(tamanhoFixo){ // Compressão e descompressão dos dados usando um tamanho maxBits fixo
+        if (tamanhoFixo) { // Compressão e descompressão dos dados usando um tamanho maxBits fixo
             for (const string& caminhoEntrada : arquivosTeste)
-                executarProcessamento(caminhoEntrada, diretorioCompressed, diretorioDescompressed, maxBits, relatorios);        }
-        
-        else{ // Compressão e descompressão dos dados para 4 valores diferentes de maxbits
-            int bits[4] = {9, 12, 16, 20};
-                for(int i = 0; i < 4; i++)
-                    for (const string& caminhoEntrada : arquivosTeste)
-                        executarProcessamento(caminhoEntrada, diretorioCompressed, diretorioDescompressed, bits[i], relatorios);
+                executarProcessamento(caminhoEntrada, diretorioCompressed, diretorioDescompressed, maxBits, relatorios);
+        }
+
+        else { // Compressão e descompressão dos dados para 4 valores diferentes de maxbits
+            int bits[4] = { 9, 12, 16, 20 };
+            for (int i = 0; i < 4; i++)
+                for (const string& caminhoEntrada : arquivosTeste)
+                    executarProcessamento(caminhoEntrada, diretorioCompressed, diretorioDescompressed, bits[i], relatorios);
         }
     }
     else {
