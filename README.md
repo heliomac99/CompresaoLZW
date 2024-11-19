@@ -66,6 +66,6 @@ Ao executar o programa, um arquivo dados.json é gerado na pasta results/, e par
 ### 4. Gerar gráficos de desemepenho
 Certifique-se de ter as bibliotecas de python listadas em requirements.txt baixadas.
 ```bash
-python3 graficos.py
+python3 geraGraficos.py
 ```
 Gráficos serão gerados no diretório results/graphic/

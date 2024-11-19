@@ -363,3 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 /relatorio/dados.json
+
+/testCompressed/
+
+/testDecompressed/

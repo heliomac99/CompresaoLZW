@@ -1,6 +1,11 @@
+import os  # Importação do módulo para manipulação de diretórios
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Garante que a pasta 'results/graphic' exista
+output_dir = "results/graphic"
+os.makedirs(output_dir, exist_ok=True)
 
 dados = pd.read_json("results/dados.json")
 
@@ -18,7 +23,7 @@ plt.title('Média da Taxa de Compressão por maxBits')
 plt.xlabel('maxBits')
 plt.ylabel('Média da Taxa de Compressão (%)')
 plt.grid(True)
-output_file = "results/graphic/mediaTaxa_por_maxbits_grafico.png"
+output_file = os.path.join(output_dir, "mediaTaxa_por_maxbits_grafico.png")
 plt.savefig(output_file)
 
 """A taxa de compressão dos dados aumenta a medida que diminuímos o tamanho máximo do código dos prefixos
@@ -36,7 +41,7 @@ plt.title('Tempo Médio de Execução por maxBits')
 plt.xlabel('maxBits')
 plt.ylabel('Tempo Médio de Execução (ms)')
 plt.grid(True)
-output_file = "results/graphic/mediaTempo_por_maxbits_grafico.png"
+output_file = os.path.join(output_dir, "mediaTempo_por_maxbits_grafico.png")
 plt.savefig(output_file)
 
 """O tempo médio de execução tanto para compressão quanto descompressão aumenta na medida que diminuímos nosso limitante de tamanho do código dos prefixos da árvore(maxBits)
@@ -54,7 +59,7 @@ plt.title('Tamanho Médio do Dicionário por maxBits')
 plt.xlabel('maxBits')
 plt.ylabel('Tamanho Médio do Dicionário')
 plt.grid(True)
-output_file = "results/graphic/mediaDicionario_por_maxbits_grafico.png"
+output_file = os.path.join(output_dir, "mediaDicionario_por_maxbits_grafico.png")
 plt.savefig(output_file)
 
 """O tamanho do dicionário não varia a medida que variamos nosso maxBits
@@ -78,7 +83,7 @@ plt.title('Tempo Médio de Compressão vs Descompressão')
 plt.xlabel('Tipo de Operação')
 plt.ylabel('Tempo Médio (ms)')
 plt.grid(True)
-output_file = "results/graphic/comp_vs_desc_grafico.png"
+output_file = os.path.join(output_dir, "comp_vs_desc_grafico.png")
 plt.savefig(output_file)
 
 """A compressão gasta muito mais tempo independente do maxbits, tipo e tamanho dos dados.
@@ -94,7 +99,7 @@ sns.scatterplot(data=dados, x='tamanhoDicionario', y='tempo', hue='tipo')
 plt.title('Relação entre Tamanho do Dicionário e Tempo por Tipo')
 plt.xlabel('Tamanho do Dicionário')
 plt.ylabel('Tempo (ms)')
-output_file = "results/graphic/tempo_espaco_grafico.png"
+output_file = os.path.join(output_dir, "tempo_espaco_grafico.png")
 plt.savefig(output_file)
 
 """- A medida que aumentamos o tamanho do dicionário maior é o tempo de execução e maior é a diferença de tempo de execução entre compressão e descompressão para um mesmo arquivo"""
