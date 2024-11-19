@@ -287,12 +287,12 @@ void printInfo(Operacao operacao, const string& nomeArquivo, size_t tamanhoOrigi
         cout << "Tamanho descomprimido:\t" << tamanhoDescomprimido << "\tbytes\n";
 
     if (operacao == Compressao) {
-        cout << "Taxa:\t" << taxa << "\t%\n";
-        cout << "Tamanho:\t" << tamanhoDicionario << "\telementos\n";
+        cout << "Taxa:\t\t\t" << taxa << "\t%\n";
+        cout << "Tamanho:\t\t" << tamanhoDicionario << "\telementos\n";
     }
         
-    cout << "Tempo:\t" << tempo << "\tms\n\n";
-    cout << "Max bits:\t" << maxBits << "\t\n\n";
+    cout << "Tempo:\t\t\t" << tempo << "\tms\n\n";
+    cout << "Max bits:\t\t" << maxBits << "\t\n\n";
 }
 
 void processarArquivo(const string& caminhoEntrada, const string& nomeArquivoComprimido, const string& caminhoSaida, int maxBits, vector<json>& relatorios) {
@@ -494,7 +494,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-string directory = "relatorio";
+string directory = "results";
 #if defined(_WIN32)
     // Convert string to wide string for Windows API
     wstring wDirectory(directory.begin(), directory.end());
@@ -512,7 +512,7 @@ string directory = "relatorio";
 
 
     // Cria Arquivo json para escrita do relatorio
-    ofstream relatorio("relatorio/dados.json");
+    ofstream relatorio("results/dados.json");
     if (!relatorio.is_open())
         throw runtime_error("Erro ao criar relatório");
 
